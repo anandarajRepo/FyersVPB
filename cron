@@ -1,0 +1,5 @@
+# Start strategy at 9:15 AM on weekdays
+55 8 * * 1-5 /root/FyersVPB/run_vpb.sh >> /var/log/vpb.log 2>&1
+
+# Stop strategy at 3:30 PM every day
+30 15 * * 1-5 /root/FyersVPB/stop_vpb.sh >> /var/log/vpb.log 2>&1

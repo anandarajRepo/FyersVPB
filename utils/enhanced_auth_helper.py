@@ -228,19 +228,21 @@ class FyersAuthManager:
 
 # Convenience functions
 
-def setup_auth(client_id: str, secret_key: str, pin: Optional[str] = None) -> Tuple[str, str]:
+def setup_auth(client_id: str, secret_key: str, redirect_uri: str = "https://127.0.0.1/",
+               pin: Optional[str] = None) -> Tuple[str, str]:
     """
     Complete authentication setup flow.
 
     Args:
         client_id: Fyers API client ID
         secret_key: Fyers API secret key
+        redirect_uri: OAuth redirect URI (default: https://127.0.0.1/)
         pin: Trading PIN (optional)
 
     Returns:
         Tuple of (access_token, refresh_token)
     """
-    auth_manager = FyersAuthManager(client_id, secret_key)
+    auth_manager = FyersAuthManager(client_id, secret_key, redirect_uri)  # ← Pass redirect_uri here
 
     # Step 1: Generate auth code
     auth_code = auth_manager.generate_auth_code()

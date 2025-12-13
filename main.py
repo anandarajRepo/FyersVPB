@@ -124,14 +124,17 @@ def cmd_auth():
         load_dotenv()
         client_id = os.getenv('FYERS_CLIENT_ID')
         secret_key = os.getenv('FYERS_SECRET_KEY')
+        redirect_uri = os.getenv('FYERS_REDIRECT_URI', 'https://127.0.0.1/')  # ← Add this line
         pin = os.getenv('FYERS_PIN')
 
         if not client_id or not secret_key:
             print("\n Error: FYERS_CLIENT_ID and FYERS_SECRET_KEY must be set in .env file")
             return
 
+        print(f"\n Using redirect URI: {redirect_uri}")  # ← Add this line
+
         # Setup authentication
-        access_token, refresh_token = setup_auth(client_id, secret_key, pin)
+        access_token, refresh_token = setup_auth(client_id, secret_key, redirect_uri, pin)  # ← Update this line
 
         print("\n Authentication successful!")
         print(f"Access Token: {access_token[:20]}...")

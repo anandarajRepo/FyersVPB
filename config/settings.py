@@ -56,8 +56,14 @@ class VolumeProfileStrategyConfig:
 
     # Signal filtering
     min_confidence: float = 0.65  # Minimum signal confidence (65%)
+    require_volume_confirmation: bool = True  # Require volume confirmation
     avoid_low_volume_nodes: bool = True  # Skip breakouts near LVN
     prefer_high_volume_nodes: bool = True  # Prefer breakouts near HVN
+
+    # Volume analysis parameters
+    volume_ma_period: int = 20  # Volume moving average period
+    high_volume_threshold: float = 1.5  # High volume threshold (1.5x average)
+    low_volume_threshold: float = 0.5  # Low volume threshold (0.5x average)
 
     # Risk management
     stop_loss_pct: float = 1.5  # Stop loss from entry
@@ -83,16 +89,23 @@ class TradingConfig:
     market_end_minute: int = 30
 
     # Volume Profile calculation timing
+    vp_calculation_time_hour: int = 9  # VP calculation start hour
+    vp_calculation_time_minute: int = 30  # VP calculation start minute
     vp_start_time: str = "09:15"  # Start calculating VP
     vp_ready_time: str = "10:00"  # VP ready for signals (45 min data)
 
     # Signal generation window
+    signal_generation_start_hour: int = 9  # Signal generation start hour
+    signal_generation_start_minute: int = 30  # Signal generation start minute
     signal_start_hour: int = 10
     signal_start_minute: int = 0
+    signal_generation_end_hour: int = 14  # Signal generation end hour
+    signal_generation_end_minute: int = 30  # Signal generation end minute
     signal_end_hour: int = 15
     signal_end_minute: int = 0
 
     # Monitoring intervals
     monitoring_interval: int = 10  # Strategy cycle (seconds)
     position_update_interval: int = 5  # Position monitoring (seconds)
+    vp_update_interval: int = 300  # VP update interval (seconds)
     vp_recalc_interval: int = 300  # Recalculate VP every 5 minutes

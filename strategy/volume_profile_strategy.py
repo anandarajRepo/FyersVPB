@@ -38,7 +38,7 @@ class VolumeProfileBreakoutStrategy:
 
         # Volume Profile Calculator
         self.vp_calculator = VolumeProfileCalculator(
-            price_buckets=strategy_config.price_buckets,
+            num_price_levels=strategy_config.price_buckets,
             value_area_pct=strategy_config.value_area_pct
         )
 
@@ -98,12 +98,7 @@ class VolumeProfileBreakoutStrategy:
             self.live_quotes[symbol] = live_quote
 
             # Add tick data to VP calculator
-            self.vp_calculator.add_tick_data(
-                symbol,
-                live_quote.ltp,
-                live_quote.volume,
-                live_quote.timestamp
-            )
+            self.vp_calculator.add_tick_data(symbol, live_quote)
 
             # Update position tracking if we have a position
             if symbol in self.positions:
@@ -199,12 +194,11 @@ class VolumeProfileBreakoutStrategy:
 
                 if self.strategy_config.vp_period == VolumeProfilePeriod.DAILY:
                     # Use previous day's data
-                    yesterday = datetime.now().replace(hour=0, minute=0) - timedelta(days=1)
-                    vp_data = self.vp_calculator.calculate_daily_volume_profile(symbol, yesterday)
+                    vp_data = self.vp_calculator.calculate_daily_volume_profile(symbol)
 
                 elif self.strategy_config.vp_period == VolumeProfilePeriod.SESSION:
                     # Use current session data
-                    vp_data = self.vp_calculator.calculate_session_volume_profile(symbol)
+                    vp_data = self.vp_calculator.calculate_volume_profile(symbol)
 
                 if vp_data:
                     self.volume_profiles[symbol] = vp_data

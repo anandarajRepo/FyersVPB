@@ -248,9 +248,30 @@ class VolumeProfileCalculator:
         return self.calculated_profiles.get(symbol)
 
     def calculate_daily_volume_profile(self, symbol: str) -> Optional[VolumeProfileData]:
-        """Calculate Volume Profile for current trading day"""
-        today = datetime.now().replace(hour=9, minute=15, second=0, microsecond=0)
-        return self.calculate_volume_profile(symbol, start_time=today)
+        """
+        Calculate Volume Profile for current trading day dynamically until 3 PM IST
+
+        - Before 3 PM: calculates from 9:15 AM to current time
+        - After 3 PM: calculates from 9:15 AM to 3 PM (fixed range)
+        """
+        now = datetime.now()
+
+        # Start time: 9:15 AM today
+        start_time = now.replace(hour=9, minute=15, second=0, microsecond=0)
+
+        # End time: current time if before 3 PM, otherwise 3 PM
+        vp_cutoff_time = now.replace(hour=15, minute=0, second=0, microsecond=0)
+
+        if now < vp_cutoff_time:
+            # Dynamic calculation until current time
+            end_time = now
+            logger.debug(f"Calculating dynamic VP for {symbol} from 9:15 AM to {now.strftime('%H:%M:%S')}")
+        else:
+            # Fixed calculation until 3 PM
+            end_time = vp_cutoff_time
+            logger.debug(f"Calculating fixed VP for {symbol} from 9:15 AM to 3:00 PM")
+
+        return self.calculate_volume_profile(symbol, start_time=start_time, end_time=end_time)
 
     def calculate_session_volume_profile(self, symbol: str,
                                          session_start: datetime,

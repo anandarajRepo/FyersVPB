@@ -88,10 +88,11 @@ class TradingConfig:
     market_end_hour: int = 15
     market_end_minute: int = 30
 
-    # Volume Profile calculation timing
+    # Volume Profile calculation timing (Dynamic until 3 PM)
     vp_calculation_time_hour: int = 9  # VP calculation start hour
     vp_calculation_time_minute: int = 30  # VP calculation start minute
-    vp_start_time: str = "09:15"  # Start calculating VP
+    vp_start_time: str = "09:15"  # Start calculating VP (9:15 AM)
+    vp_cutoff_time: str = "15:00"  # VP cutoff time (3:00 PM) - dynamic until this time
     vp_ready_time: str = "10:00"  # VP ready for signals (45 min data)
 
     # Signal generation window

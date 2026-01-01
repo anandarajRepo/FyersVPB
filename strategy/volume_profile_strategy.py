@@ -184,16 +184,28 @@ class VolumeProfileBreakoutStrategy:
             logger.error(f"Error checking breakout for {symbol}: {e}")
 
     async def calculate_volume_profiles(self):
-        """Calculate volume profiles for all symbols"""
+        """
+        Calculate volume profiles for all symbols
+
+        Dynamically calculates from 9:15 AM to current time (if before 3 PM)
+        or from 9:15 AM to 3 PM (if after 3 PM)
+        """
         try:
-            logger.info("Calculating Volume Profiles for all symbols...")
+            now = datetime.now()
+            vp_cutoff = now.replace(hour=15, minute=0, second=0, microsecond=0)
+            is_dynamic = now < vp_cutoff
+
+            if is_dynamic:
+                logger.info(f"Calculating Dynamic Volume Profiles (9:15 AM to {now.strftime('%H:%M:%S')})...")
+            else:
+                logger.info(f"Calculating Fixed Volume Profiles (9:15 AM to 3:00 PM)...")
 
             calculated_count = 0
             for symbol in self.trading_symbols:
                 vp_data = None
 
                 if self.strategy_config.vp_period == VolumeProfilePeriod.DAILY:
-                    # Use previous day's data
+                    # Calculate dynamically until 3 PM IST
                     vp_data = self.vp_calculator.calculate_daily_volume_profile(symbol)
 
                 elif self.strategy_config.vp_period == VolumeProfilePeriod.SESSION:
@@ -208,7 +220,9 @@ class VolumeProfileBreakoutStrategy:
                                  f"VAH=Rs.{vp_data.vah:.2f}, VAL=Rs.{vp_data.val:.2f}")
 
             self.vp_calculated = True
-            logger.info(f"Volume Profiles calculated for {calculated_count}/{len(self.trading_symbols)} symbols")
+            calculation_type = "dynamic" if is_dynamic else "fixed"
+            logger.info(f"{calculation_type.capitalize()} Volume Profiles calculated for "
+                        f"{calculated_count}/{len(self.trading_symbols)} symbols")
 
         except Exception as e:
             logger.error(f"Error calculating volume profiles: {e}")

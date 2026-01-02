@@ -205,6 +205,19 @@ class VolumeProfileBreakoutStrategy:
             total_ticks = sum(len(ticks) for ticks in self.vp_calculator.tick_data.values())
             symbols_with_data = len([s for s in self.trading_symbols if self.vp_calculator.tick_data.get(s)])
 
+            # Check if we have sufficient tick data to calculate volume profiles
+            MIN_TICKS_REQUIRED = 10
+            symbols_with_sufficient_data = len([s for s in self.trading_symbols
+                                               if len(self.vp_calculator.tick_data.get(s, [])) >= MIN_TICKS_REQUIRED])
+
+            if total_ticks == 0:
+                logger.debug("No tick data available yet. Skipping volume profile calculation.")
+                return
+
+            if symbols_with_sufficient_data < len(self.trading_symbols) * 0.5:
+                logger.debug(f"Insufficient tick data: {symbols_with_sufficient_data}/{len(self.trading_symbols)} symbols have {MIN_TICKS_REQUIRED}+ ticks. Collecting more data...")
+                return
+
             if is_dynamic:
                 logger.info(f"Calculating Dynamic Volume Profiles (9:15 AM to {now.strftime('%H:%M:%S')})...")
             else:

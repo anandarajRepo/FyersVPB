@@ -231,6 +231,16 @@ async def cmd_run():
         logger.info("Market data feed connected to strategy")
 
         print("\n✓ Strategy initialized successfully!")
+
+        # Initial data collection phase
+        print("\n Collecting initial tick data...")
+        for i in range(5):  # Collect 5 rounds of quotes before starting strategy
+            market_data_service.fetch_quotes()
+            await asyncio.sleep(2)  # 2 seconds between each fetch
+
+        total_ticks = sum(len(ticks) for ticks in strategy.vp_calculator.tick_data.values())
+        print(f"\n✓ Collected {total_ticks} initial ticks")
+
         print("\n Running strategy... (Press Ctrl+C to stop)")
 
         # Main execution loop

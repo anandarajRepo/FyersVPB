@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from config.settings import FyersConfig, VolumeProfileStrategyConfig, TradingConfig, VolumeProfilePeriod
 from utils.enhanced_auth_helper import FyersAuthManager, setup_auth, test_authentication, update_pin
 from strategy.volume_profile_strategy import VolumeProfileBreakoutStrategy
+from services.fyers_market_data_service import FyersMarketDataService
 
 # Load environment variables
 load_dotenv()
@@ -199,6 +200,21 @@ async def cmd_run():
             print("\n Error: Authentication not setup. Run 'python main.py auth' first")
             return
 
+        # Create market data service
+        logger.info("Creating market data service...")
+        market_data_service = FyersMarketDataService(
+            client_id=fyers_config.client_id,
+            access_token=fyers_config.access_token
+        )
+
+        # Test connection
+        logger.info("Testing Fyers API connection...")
+        if not market_data_service.test_connection():
+            print("\n Error: Failed to connect to Fyers API")
+            return
+
+        print("\n✓ Connected to Fyers API")
+
         # Create strategy
         strategy = VolumeProfileBreakoutStrategy(
             fyers_config, strategy_config, trading_config
@@ -209,12 +225,23 @@ async def cmd_run():
             print("\n Strategy initialization failed")
             return
 
-        print("\n Strategy initialized successfully!")
+        # Connect market data to strategy
+        # Add callback to feed quotes to strategy
+        market_data_service.add_quote_callback(strategy._on_live_data_update)
+        logger.info("Market data feed connected to strategy")
+
+        print("\n✓ Strategy initialized successfully!")
         print("\n Running strategy... (Press Ctrl+C to stop)")
 
         # Main execution loop
         while True:
+            # Fetch live market data
+            market_data_service.fetch_quotes()
+
+            # Run strategy cycle
             await strategy.run_strategy_cycle()
+
+            # Wait before next iteration
             await asyncio.sleep(trading_config.monitoring_interval)
 
     except KeyboardInterrupt:
@@ -234,6 +261,25 @@ async def cmd_test():
         # Load configuration
         fyers_config, strategy_config, trading_config = load_configuration()
 
+        # Validate authentication
+        if not fyers_config.access_token:
+            print("\n Error: Authentication not setup. Run 'python main.py auth' first")
+            return
+
+        # Create market data service
+        print("\n Creating market data service...")
+        market_data_service = FyersMarketDataService(
+            client_id=fyers_config.client_id,
+            access_token=fyers_config.access_token
+        )
+
+        # Test connection
+        if not market_data_service.test_connection():
+            print("\n Error: Failed to connect to Fyers API")
+            return
+
+        print("\n✓ Connected to Fyers API")
+
         # Create strategy
         strategy = VolumeProfileBreakoutStrategy(
             fyers_config, strategy_config, trading_config
@@ -242,7 +288,19 @@ async def cmd_test():
         # Initialize
         await strategy.initialize()
 
+        # Connect market data to strategy
+        market_data_service.add_quote_callback(strategy._on_live_data_update)
+
+        # Collect tick data for a period
+        print("\n Collecting tick data (30 seconds)...")
+        import time
+        for i in range(6):  # Collect for 30 seconds (6 x 5 seconds)
+            market_data_service.fetch_quotes()
+            time.sleep(5)
+            print(f"  {(i+1)*5} seconds...")
+
         # Calculate volume profiles
+        print("\n Calculating volume profiles...")
         await strategy.calculate_volume_profiles()
 
         # Display results

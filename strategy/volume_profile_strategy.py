@@ -63,6 +63,7 @@ class VolumeProfileBreakoutStrategy:
 
         # Real-time data tracking
         self.live_quotes: Dict[str, LiveQuote] = {}
+        self.total_quotes_received = 0
 
         # Breakout tracking
         self.breakout_detected: Dict[str, str] = {}  # symbol -> "VAH" or "VAL"
@@ -96,9 +97,14 @@ class VolumeProfileBreakoutStrategy:
 
             # Update internal storage
             self.live_quotes[symbol] = live_quote
+            self.total_quotes_received += 1
 
             # Add tick data to VP calculator
             self.vp_calculator.add_tick_data(symbol, live_quote)
+
+            # Log first few quotes for debugging
+            if self.total_quotes_received <= 5:
+                logger.info(f"Quote received #{self.total_quotes_received}: {symbol} @ ₹{live_quote.ltp:.2f}")
 
             # Update position tracking if we have a position
             if symbol in self.positions:
@@ -195,10 +201,16 @@ class VolumeProfileBreakoutStrategy:
             vp_cutoff = now.replace(hour=15, minute=0, second=0, microsecond=0)
             is_dynamic = now < vp_cutoff
 
+            # Log tick data status
+            total_ticks = sum(len(ticks) for ticks in self.vp_calculator.tick_data.values())
+            symbols_with_data = len([s for s in self.trading_symbols if self.vp_calculator.tick_data.get(s)])
+
             if is_dynamic:
                 logger.info(f"Calculating Dynamic Volume Profiles (9:15 AM to {now.strftime('%H:%M:%S')})...")
             else:
                 logger.info(f"Calculating Fixed Volume Profiles (9:15 AM to 3:00 PM)...")
+
+            logger.info(f"Tick data available: {total_ticks} ticks for {symbols_with_data}/{len(self.trading_symbols)} symbols")
 
             calculated_count = 0
             for symbol in self.trading_symbols:
